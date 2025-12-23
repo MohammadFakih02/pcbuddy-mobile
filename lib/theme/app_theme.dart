@@ -6,6 +6,8 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+
+      fontFamily: 'Poppins', 
       
       // 1. Background Colors
       scaffoldBackgroundColor: AppColors.darkBackground,

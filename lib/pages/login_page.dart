@@ -1,17 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:pcbuddy/routes/app_routes.dart';
+import '../widgets/my_button.dart';
 import '../widgets/text_field.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  bool _isLoading = false;
+
+  void _signIn() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await Future.delayed(const Duration(seconds: 1));
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Access theme data for cleaner code below
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      // Background color is handled automatically by the Theme now
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -19,27 +39,23 @@ class LoginPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 50),
-
-                // 1. Logo
                 Icon(
                   Icons.lock,
                   size: 100,
-                  color: colorScheme.primary, // Uses your App Blue
+                  color: colorScheme.primary,
                 ),
 
                 const SizedBox(height: 50),
 
-                // 2. Welcome Text
                 Text(
                   'Welcome back, you\'ve been missed!',
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.textTheme.bodyMedium?.color, // Uses Grey
+                    color: theme.textTheme.bodyMedium?.color,
                   ),
                 ),
 
                 const SizedBox(height: 25),
 
-                // 3. Email
                 const MyTextField(
                   hintText: 'Email',
                   icon: Icons.email,
@@ -48,7 +64,6 @@ class LoginPage extends StatelessWidget {
 
                 const SizedBox(height: 10),
 
-                // 4. Password
                 const MyTextField(
                   hintText: 'Password',
                   icon: Icons.lock,
@@ -57,7 +72,6 @@ class LoginPage extends StatelessWidget {
 
                 const SizedBox(height: 10),
 
-                // 5. Forgot Password?
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: Row(
@@ -65,7 +79,6 @@ class LoginPage extends StatelessWidget {
                     children: [
                       Text(
                         'Forgot Password?',
-                        // Uses the Grey text style from theme
                         style: theme.textTheme.bodyMedium,
                       ),
                     ],
@@ -74,26 +87,14 @@ class LoginPage extends StatelessWidget {
 
                 const SizedBox(height: 25),
 
-                // 6. Sign In Button
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 60,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Logic
-                      },
-                      // We REMOVED the style block here. 
-                      // It now grabs the Blue Pill style from AppTheme automatically.
-                      child: const Text("Sign In"),
-                    ),
-                  ),
+                MyButton(
+                  text: "Sign In",
+                  isLoading: _isLoading, 
+                  onTap: _signIn,
                 ),
 
                 const SizedBox(height: 50),
 
-                // 7. Register
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -102,11 +103,16 @@ class LoginPage extends StatelessWidget {
                       style: theme.textTheme.bodyMedium,
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      'Register now',
-                      style: TextStyle(
-                        color: colorScheme.secondary, // Uses Light Blue/Cyan
-                        fontWeight: FontWeight.bold,
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, AppRoutes.register);
+                      },
+                      child: Text(
+                        'Register now',
+                        style: TextStyle(
+                          color: colorScheme.secondary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
