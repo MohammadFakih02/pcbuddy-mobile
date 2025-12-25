@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'PCBuddy',
       theme: AppTheme.darkTheme,
-      initialRoute: AppRoutes.login,
+      initialRoute: AppRoutes.home,
       routes: AppRoutes.getRoutes(),
     );
   }
