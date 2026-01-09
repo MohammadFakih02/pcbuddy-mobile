@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:pcbuddy/providers/auth_provider.dart';
 import '../widgets/my_button.dart';
 import '../widgets/text_field.dart';
 
-// 1. Change to StatefulWidget (Required for Controllers)
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -11,25 +12,14 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  // 2. Controllers to retrieve text
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
-
-  // 3. Global Key (The "Remote Control" for the form)
   final _formKey = GlobalKey<FormState>();
-
-  void _register() {
-    // 4. Trigger Validation
-    if (_formKey.currentState!.validate()) {
-      // If valid, proceed!
-    }
-  }
 
   @override
   void dispose() {
-    // Clean up controllers when page closes to save memory
     _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -37,24 +27,52 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  void _register() async {
+    if (_formKey.currentState!.validate()) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+      try {
+        await authProvider.register(
+          _usernameController.text.trim(),
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+        );
+
+        if (mounted) {
+          Navigator.pop(context); 
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString().replaceAll("Exception: ", "")),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isLoading = context.watch<AuthProvider>().isLoading;
 
     return Scaffold(
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            child: Form( // <--- Wrap Column in a FORM
-              key: _formKey, // Connect the key
+            child: Form(
+              key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.lock, size: 100, color: colorScheme.primary),
                   const SizedBox(height: 30),
                   Text(
-                    'Create an account', // Changed text to fit context
+                    'Create an account',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.textTheme.bodyMedium?.color,
                     ),
@@ -65,12 +83,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     hintText: 'Username',
                     icon: Icons.person,
                     controller: _usernameController,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a username';
-                      }
-                      return null;
-                    },
+                    validator: (value) =>
+                        (value == null || value.isEmpty) ? 'Please enter a username' : null,
                   ),
 
                   const SizedBox(height: 25),
@@ -80,12 +94,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     icon: Icons.email,
                     controller: _emailController,
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an email';
-                      }
-                      if (!value.contains('@') || !value.contains('.')) {
-                        return 'Please enter a valid email';
-                      }
+                      if (value == null || value.isEmpty) return 'Please enter an email';
+                      if (!value.contains('@') || !value.contains('.')) return 'Invalid email';
                       return null;
                     },
                   ),
@@ -98,12 +108,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     obscureText: true,
                     controller: _passwordController,
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a password';
-                      }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
-                      }
+                      if (value == null || value.isEmpty) return 'Please enter a password';
+                      if (value.length < 6) return 'Minimum 6 characters';
                       return null;
                     },
                   ),
@@ -116,12 +122,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     obscureText: true,
                     controller: _confirmController,
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please confirm your password';
-                      }
-                      if (value != _passwordController.text) {
-                        return 'Passwords do not match';
-                      }
+                      if (value != _passwordController.text) return 'Passwords do not match';
                       return null;
                     },
                   ),
@@ -130,6 +131,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                   MyButton(
                     text: "Register",
+                    isLoading: isLoading,
                     onTap: _register,
                   ),
 
@@ -141,9 +143,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       Text('Already have an account?', style: theme.textTheme.bodyMedium),
                       const SizedBox(width: 4),
                       GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
+                        onTap: () => Navigator.pop(context),
                         child: Text(
                           'Login now',
                           style: TextStyle(

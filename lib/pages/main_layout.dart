@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pcbuddy/pages/build_page.dart';
 import 'package:pcbuddy/pages/home_page.dart';
 
 
@@ -15,7 +16,7 @@ class _MainLayoutState extends State<MainLayout> {
   // This list holds the widgets for each tab
   final List<Widget> _pages = [
     const HomePage(),
-    const Center(child: Text("Builds Page")), // Placeholder
+    const PCBuilderPage(),
     const Center(child: Text("Chat Page")),   // Placeholder
     const Center(child: Text("Profile Page")), // Placeholder
   ];
