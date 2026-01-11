@@ -51,6 +51,7 @@ class SyncService {
       if (data.motherboards.isNotEmpty) db.processSyncBatch('motherboards', data.motherboards),
       if (data.powerSupplies.isNotEmpty) db.processSyncBatch('power_supplies', data.powerSupplies),
       if (data.cases.isNotEmpty) db.processSyncBatch('cases', data.cases),
+      if (data.prebuilts.isNotEmpty) db.processPrebuiltBatch(data.prebuilts),
     ]);
   }
 }

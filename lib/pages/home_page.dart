@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:pcbuddy/config/api_constants.dart';
+import 'package:pcbuddy/providers/auth_provider.dart';
+import 'package:pcbuddy/services/database_helper.dart';
+import 'package:pcbuddy/models/sync_models.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -8,202 +13,263 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // Changed from HardwareItem to PrebuiltItem
+  late Future<List<PrebuiltItem>> _prebuiltsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _prebuiltsFuture = _fetchPrebuilts();
+  }
+
+  Future<List<PrebuiltItem>> _fetchPrebuilts() async {
+    // Fetch from the new helper method
+    return await DatabaseHelper.instance.getTopRatedPrebuilts();
+  }
+
+  ImageProvider _getProfileImage(String? relativePath) {
+    if (relativePath == null || relativePath.isEmpty) {
+      return const NetworkImage('https://placehold.co/150x150/png?text=User');
+    }
+    if (relativePath.startsWith('http')) {
+      return NetworkImage(relativePath);
+    }
+    return NetworkImage('${ApiConstants.baseUrl}$relativePath');
+  }
+
+  // Helper for Product Images (handles parts from PCPartPicker vs relative URLs)
+  String _formatProductImage(String? url) {
+    if (url == null || url.isEmpty) return 'https://placehold.co/200x200/png?text=PC';
+    if (url.startsWith('//')) return 'https:$url'; // PCPartPicker format
+    if (url.startsWith('http')) return url;
+    return '${ApiConstants.baseUrl}$url'; // Local upload format
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().user;
+
     return Scaffold(
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Welcome Back,",
-                style: TextStyle(color: Colors.grey[400], fontSize: 16),
-              ),
-              const Text(
-                "Mohammad Fakih",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const CircleAvatar(
-                radius: 25,
-                backgroundImage: NetworkImage(
-                  'https://placehold.co/150x150/png',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          GestureDetector(
-            onTap: () => {},
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.blueAccent.shade400,
-                    Colors.blueAccent.shade700,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "AI Build Assistant",
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Get a custom PC part list in seconds",
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                      ],
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16.0),
+          children: [
+            // --- 1. Header (Unchanged) ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Welcome Back,",
+                      style: TextStyle(color: Colors.grey[400], fontSize: 16),
                     ),
-                  ),
-                  Icon(Icons.auto_awesome, size: 50, color: Colors.white),
-                ],
-              ),
+                    Text(
+                      user?.username ?? "Guest",
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                CircleAvatar(
+                  radius: 25,
+                  backgroundImage: _getProfileImage(user?.profilePicture),
+                  onBackgroundImageError: (_, __) {},
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            "Tools & Services",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 1.1,
-            children: [
-              Container(
+
+            const SizedBox(height: 24),
+
+            // --- 2. AI Builder Card (Unchanged) ---
+            GestureDetector(
+              onTap: () { print("Navigate to AI Builder"); },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.speed, color: Colors.purpleAccent, size: 32),
-                    const SizedBox(height: 12),
-                    Text(
-                      "Benchmarks",
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blueAccent.withOpacity(0.2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    )
                   ],
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.laptop_mac,
-                      color: Colors.orangeAccent,
-                      size: 32,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      "Laptop Finder",
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.menu_book, color: Colors.greenAccent, size: 32),
-                    const SizedBox(height: 12),
-                    Text(
-                      "Build Guides",
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.search, color: Colors.redAccent, size: 32),
-                    const SizedBox(height: 12),
-                    Text(
-                      "Part Scraper",
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            "Trending Components",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 120,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: 5,
-              itemBuilder: (context, index) {
-                return Container(
-                  width: 100,
-                  margin: const EdgeInsets.only(right: 16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    colors: [Colors.blueAccent.shade400, Colors.blueAccent.shade700],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.memory, color: Colors.blue[200]), // CPU Icon
-                      const SizedBox(height: 8),
-                      const Text("RTX 4090", style: TextStyle(fontSize: 12)),
-                      const Text(
-                        "1,599",
-                        style: TextStyle(fontSize: 10, color: Colors.green),
+                ),
+                child: const Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("AI Build Assistant", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                          SizedBox(height: 8),
+                          Text("Generate a complete PC part list instantly based on your budget and needs.", style: TextStyle(color: Colors.white70)),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
+                    ),
+                    Icon(Icons.auto_awesome, size: 50, color: Colors.white),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
+
+            const SizedBox(height: 24),
+
+            // --- 3. AI Tools Grid (Unchanged) ---
+            const Text("AI Tools", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 1.1,
+              children: [
+                _buildToolCard(context, Icons.speed, Colors.purpleAccent, "FPS Estimator"),
+                _buildToolCard(context, Icons.laptop_mac, Colors.orangeAccent, "Laptop Rater"),
+                _buildToolCard(context, Icons.verified_user_outlined, Colors.greenAccent, "Compatibility Check"),
+                _buildToolCard(context, Icons.star_half, Colors.redAccent, "Rate My Build"),
+              ],
+            ),
+
+            const SizedBox(height: 24),
+
+            // --- 4. TOP RATED BUILDS (New Section) ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Top Rated Builds",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Icon(Icons.arrow_forward, size: 20, color: Colors.grey[600]),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            SizedBox(
+              height: 140, // Increased height for better card layout
+              child: FutureBuilder<List<PrebuiltItem>>(
+                future: _prebuiltsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(12)),
+                      child: const Center(child: Text("Sync data to see builds", style: TextStyle(color: Colors.grey))),
+                    );
+                  }
+
+                  final builds = snapshot.data!;
+
+                  return ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: builds.length,
+                    itemBuilder: (context, index) {
+                      final build = builds[index];
+                      return Container(
+                        width: 160,
+                        margin: const EdgeInsets.only(right: 16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white10),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Image Section
+                            Expanded(
+                              flex: 3,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                                  image: DecorationImage(
+                                    image: NetworkImage(_formatProductImage(build.imageUrl)),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Info Section
+                            Expanded(
+                              flex: 2,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      build.name, 
+                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.star, size: 12, color: Colors.amber),
+                                        const SizedBox(width: 4),
+                                        Text(build.rating.toString(), style: const TextStyle(fontSize: 11)),
+                                        const Spacer(),
+                                        Text(
+                                          "\$${build.price.toStringAsFixed(0)}",
+                                          style: const TextStyle(fontSize: 12, color: Colors.greenAccent, fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToolCard(BuildContext context, IconData icon, Color color, String label) {
+    return Material(
+      color: Theme.of(context).cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Colors.white10),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () { print("Clicked $label"); },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+              child: Icon(icon, color: color, size: 32),
+            ),
+            const SizedBox(height: 12),
+            Text(label, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          ],
+        ),
       ),
     );
   }

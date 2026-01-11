@@ -19,7 +19,7 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 1, onCreate: _createDB, onUpgrade: _onUpgrade);
+    return await openDatabase(path, version: 3, onCreate: _createDB, onUpgrade: _onUpgrade);
   }
 
   Future _createDB(Database db, int version) async {
@@ -33,18 +33,22 @@ class DatabaseHelper {
       profilePicture TEXT
     )
     ''');
+    
     await _createHardwareTables(db);
+    await _createPrebuiltTable(db);
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await _createHardwareTables(db);
     }
+    if (oldVersion < 3) {
+      await _createPrebuiltTable(db);
+    }
   }
 
   Future<void> _createHardwareTables(Database db) async {
     const tableSchema = 'id INTEGER PRIMARY KEY, name TEXT, price REAL';
-    
     await db.execute('CREATE TABLE cpus ($tableSchema)');
     await db.execute('CREATE TABLE gpus ($tableSchema)');
     await db.execute('CREATE TABLE memory ($tableSchema)');
@@ -54,27 +58,54 @@ class DatabaseHelper {
     await db.execute('CREATE TABLE cases ($tableSchema)');
   }
 
+  Future<void> _createPrebuiltTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE prebuilts (
+        id INTEGER PRIMARY KEY, 
+        name TEXT, 
+        price REAL, 
+        rating REAL, 
+        imageUrl TEXT
+      )
+    ''');
+  }
 
   Future<void> processSyncBatch(String tableName, List<HardwareItem> items) async {
     final db = await instance.database;
     final batch = db.batch();
-
     for (var item in items) {
       if (item.isDeleted) {
         batch.delete(tableName, where: 'id = ?', whereArgs: [item.id]);
       } else {
-        batch.insert(
-          tableName,
-          item.toMap(),
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        batch.insert(tableName, item.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
       }
     }
-
     await batch.commit(noResult: true);
   }
 
-  
+  Future<void> processPrebuiltBatch(List<PrebuiltItem> items) async {
+    final db = await instance.database;
+    final batch = db.batch();
+    for (var item in items) {
+      if (item.isDeleted) {
+        batch.delete('prebuilts', where: 'id = ?', whereArgs: [item.id]);
+      } else {
+        batch.insert('prebuilts', item.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    }
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<PrebuiltItem>> getTopRatedPrebuilts() async {
+    final db = await instance.database;
+    final result = await db.query(
+      'prebuilts', 
+      orderBy: 'rating DESC', 
+      limit: 5
+    );
+    return result.map((json) => PrebuiltItem.fromJson(json)).toList();
+  }
+
   Future<List<HardwareItem>> getItems(String tableName) async {
     final db = await instance.database;
     final result = await db.query(tableName, orderBy: 'name ASC');
@@ -85,7 +116,7 @@ class DatabaseHelper {
       isDeleted: false
     )).toList();
   }
-
+  
   Future<void> saveUser(AuthUser user) async {
     final db = await instance.database;
     await db.delete('user');
