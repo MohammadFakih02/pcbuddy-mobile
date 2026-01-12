@@ -2,24 +2,49 @@ import 'package:flutter/material.dart';
 import '../models/auth_user.dart';
 import '../services/auth_service.dart';
 import '../services/database_helper.dart';
-import '../services/sync_service.dart'; // Import
+import '../services/sync_service.dart';
 
 class AuthProvider with ChangeNotifier {
   AuthUser? _user;
   final AuthService _authService = AuthService();
   final SyncService _syncService = SyncService();
+  
   bool _isLoading = false;
+  
+  bool _isSyncing = false;
+  double _syncProgress = 0.0;
 
   AuthUser? get user => _user;
   bool get isAuthenticated => _user != null;
   bool get isLoading => _isLoading;
+  
+  bool get isSyncing => _isSyncing;
+  double get syncProgress => _syncProgress;
+
+  Future<void> _runSync() async {
+    _isSyncing = true;
+    _syncProgress = 0.0;
+    notifyListeners();
+
+    await _syncService.syncData(onProgress: (progress) {
+      _syncProgress = progress;
+      notifyListeners();
+    });
+
+    if (_syncProgress >= 1.0) {
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+
+    _isSyncing = false;
+    notifyListeners();
+  }
 
   Future<void> tryAutoLogin() async {
     final savedUser = await DatabaseHelper.instance.getUser();
     if (savedUser != null) {
       _user = savedUser;
       notifyListeners();
-      _syncService.syncData(); 
+      _runSync();
     }
   }
 
@@ -32,16 +57,16 @@ class AuthProvider with ChangeNotifier {
       _user = authUser;
       await DatabaseHelper.instance.saveUser(authUser);
       
-      // Trigger Sync
-      _syncService.syncData();
+      _isLoading = false;
+      notifyListeners();
+
+      await _runSync(); 
+
     } catch (e) {
       _isLoading = false;
       notifyListeners();
       rethrow;
     }
-
-    _isLoading = false;
-    notifyListeners();
   }
 
   Future<void> register(String username, String email, String password) async {
@@ -51,14 +76,16 @@ class AuthProvider with ChangeNotifier {
       final authUser = await _authService.register(username, email, password);
       _user = authUser;
       await DatabaseHelper.instance.saveUser(authUser);
-      _syncService.syncData();
+      
+      _isLoading = false;
+      notifyListeners();
+
+      await _runSync();
     } catch (e) {
       _isLoading = false;
       notifyListeners();
       rethrow;
     }
-    _isLoading = false;
-    notifyListeners();
   }
 
   Future<void> logout() async {

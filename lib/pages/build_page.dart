@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../widgets/part_selection_tile.dart'; // Ensure these paths match your project
+import '../models/sync_models.dart';
+import '../widgets/part_selection_tile.dart';
 import '../widgets/part_picker_sheet.dart';
 
 class PCBuilderPage extends StatefulWidget {
@@ -10,7 +11,8 @@ class PCBuilderPage extends StatefulWidget {
 }
 
 class _PCBuilderPageState extends State<PCBuilderPage> {
-  final Map<String, PCPart?> _selectedParts = {
+  // Using the HardwareItem model from sync_models.dart
+  final Map<String, HardwareItem?> _selectedParts = {
     "CPU": null,
     "GPU": null,
     "Motherboard": null,
@@ -20,31 +22,25 @@ class _PCBuilderPageState extends State<PCBuilderPage> {
     "Case": null,
   };
 
-  final List<PCPart> _availableParts = [
-    PCPart(name: "Ryzen 7 7800X3D", brand: "AMD", price: "\$399", type: "CPU"),
-    PCPart(name: "Intel i9-14900K", brand: "Intel", price: "\$589", type: "CPU"),
-    PCPart(name: "RTX 4080 Super", brand: "NVIDIA", price: "\$999", type: "GPU"),
-    PCPart(name: "RX 7900 XTX", brand: "AMD", price: "\$929", type: "GPU"),
-  ];
-
+  // Helper: Sum up prices
   double _calculateTotal() {
     double total = 0;
     _selectedParts.forEach((key, part) {
       if (part != null) {
-        total += double.tryParse(part.price.replaceAll('\$', '')) ?? 0;
+        total += part.price;
       }
     });
     return total;
   }
 
+  // Open the Sheet
   void _openPartPicker(String category) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
+      isScrollControlled: true, // Needed for taller sheets
       backgroundColor: Colors.transparent,
       builder: (context) => PartPickerSheet(
         category: category,
-        availableParts: _availableParts,
         onPartSelected: (part) {
           setState(() => _selectedParts[category] = part);
           Navigator.pop(context);
@@ -53,78 +49,102 @@ class _PCBuilderPageState extends State<PCBuilderPage> {
     );
   }
 
+  // Clear specific slot
+  void _clearPart(String category) {
+    setState(() {
+      _selectedParts[category] = null;
+    });
+  }
+
+  void _saveBuild() {
+    // TODO: Implement API call to save build
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Build Saving not implemented yet"))
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     double totalPrice = _calculateTotal();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Custom Build"),
-        centerTitle: true,
-      ),
+      // Ensure body is behind navbar if transparent, but here standard
       body: Column(
         children: [
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                // 1. Total Price Card
                 Container(
                   padding: const EdgeInsets.all(24),
                   margin: const EdgeInsets.only(bottom: 24),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Colors.blueAccent, Colors.transparent],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
+                      colors: [Colors.blueAccent.shade700, Colors.blueAccent.shade400],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white10),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.blueAccent.withOpacity(0.25),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      )
+                    ],
                   ),
                   child: Column(
                     children: [
                       Text(
                         "Estimated Total",
-                        style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9), 
+                          fontSize: 14, 
+                          letterSpacing: 1
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         "\$${totalPrice.toStringAsFixed(2)}",
                         style: const TextStyle(
-                          fontSize: 32,
+                          fontSize: 36,
                           fontWeight: FontWeight.bold,
-                          color: Colors.greenAccent,
+                          color: Colors.white,
                         ),
                       ),
                     ],
                   ),
                 ),
 
+                // 2. Part List
+                // We use .keys.map to iterate through categories
                 ..._selectedParts.keys.map((category) {
                   return PartSelectionTile(
                     category: category,
                     selectedPart: _selectedParts[category],
                     onTap: () => _openPartPicker(category),
+                    onClear: () => _clearPart(category),
                   );
-                })
+                }),
               ],
             ),
           ),
 
-          // 4. Persistent Action Button
+          // 3. Save Button (Pinned to bottom)
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 56),
-                backgroundColor: Colors.blueAccent,
+                backgroundColor: totalPrice > 0 ? Colors.green : Colors.grey[800],
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 0,
               ),
-              onPressed: totalPrice > 0 ? () {
-              } : null,
+              onPressed: totalPrice > 0 ? _saveBuild : null,
               child: const Text(
-                "Analyze Build",
+                "Save Configuration",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
@@ -133,18 +153,4 @@ class _PCBuilderPageState extends State<PCBuilderPage> {
       ),
     );
   }
-}
-
-class PCPart {
-  final String name;
-  final String brand;
-  final String price;
-  final String type;
-
-  PCPart({
-    required this.name,
-    required this.brand,
-    required this.price,
-    required this.type,
-  });
 }

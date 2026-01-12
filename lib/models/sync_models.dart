@@ -41,15 +41,23 @@ class HardwareItem {
   final int id;
   final String name;
   final double price;
+  final String? imageUrl;
   final bool isDeleted;
 
-  HardwareItem({required this.id, required this.name, required this.price, required this.isDeleted});
+  HardwareItem({
+    required this.id, 
+    required this.name, 
+    required this.price, 
+    this.imageUrl,
+    required this.isDeleted
+  });
 
   factory HardwareItem.fromJson(Map<String, dynamic> json) {
     return HardwareItem(
       id: json['id'],
       name: json['name'],
       price: (json['price'] as num).toDouble(),
+      imageUrl: json['imageUrl'],
       isDeleted: json['isDeleted'] ?? false,
     );
   }
@@ -59,6 +67,7 @@ class HardwareItem {
       'id': id,
       'name': name,
       'price': price,
+      'imageUrl': imageUrl,
     };
   }
 }

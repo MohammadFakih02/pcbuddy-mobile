@@ -19,7 +19,7 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 3, onCreate: _createDB, onUpgrade: _onUpgrade);
+    return await openDatabase(path, version: 4, onCreate: _createDB, onUpgrade: _onUpgrade);
   }
 
   Future _createDB(Database db, int version) async {
@@ -35,6 +35,7 @@ class DatabaseHelper {
     ''');
     
     await _createHardwareTables(db);
+
     await _createPrebuiltTable(db);
   }
 
@@ -45,10 +46,14 @@ class DatabaseHelper {
     if (oldVersion < 3) {
       await _createPrebuiltTable(db);
     }
+    if (oldVersion < 4) {
+      await _addImagesToHardware(db);
+    }
   }
 
   Future<void> _createHardwareTables(Database db) async {
-    const tableSchema = 'id INTEGER PRIMARY KEY, name TEXT, price REAL';
+    const tableSchema = 'id INTEGER PRIMARY KEY, name TEXT, price REAL, imageUrl TEXT';
+    
     await db.execute('CREATE TABLE cpus ($tableSchema)');
     await db.execute('CREATE TABLE gpus ($tableSchema)');
     await db.execute('CREATE TABLE memory ($tableSchema)');
@@ -70,16 +75,34 @@ class DatabaseHelper {
     ''');
   }
 
+  Future<void> _addImagesToHardware(Database db) async {
+    final tables = ['cpus', 'gpus', 'memory', 'storage', 'motherboards', 'power_supplies', 'cases'];
+    for (var table in tables) {
+      try {
+        await db.execute('ALTER TABLE $table ADD COLUMN imageUrl TEXT');
+      } catch (e) {
+        //lalala
+      }
+    }
+  }
+
+
   Future<void> processSyncBatch(String tableName, List<HardwareItem> items) async {
     final db = await instance.database;
     final batch = db.batch();
+
     for (var item in items) {
       if (item.isDeleted) {
         batch.delete(tableName, where: 'id = ?', whereArgs: [item.id]);
       } else {
-        batch.insert(tableName, item.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+        batch.insert(
+          tableName,
+          item.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
     }
+
     await batch.commit(noResult: true);
   }
 
@@ -96,27 +119,40 @@ class DatabaseHelper {
     await batch.commit(noResult: true);
   }
 
+  Future<List<HardwareItem>> getItems(
+    String tableName, {
+    int limit = 20, 
+    int offset = 0, 
+    String query = ''
+  }) async {
+    final db = await instance.database;
+    
+    String? whereClause;
+    List<dynamic>? whereArgs;
+
+    if (query.isNotEmpty) {
+      whereClause = 'name LIKE ?';
+      whereArgs = ['%$query%'];
+    }
+
+    final result = await db.query(
+      tableName,
+      where: whereClause,
+      whereArgs: whereArgs,
+      orderBy: 'price DESC',
+      limit: limit,
+      offset: offset,
+    );
+
+    return result.map((json) => HardwareItem.fromJson(json)).toList();
+  }
+
   Future<List<PrebuiltItem>> getTopRatedPrebuilts() async {
     final db = await instance.database;
-    final result = await db.query(
-      'prebuilts', 
-      orderBy: 'rating DESC', 
-      limit: 5
-    );
+    final result = await db.query('prebuilts', orderBy: 'rating DESC', limit: 5);
     return result.map((json) => PrebuiltItem.fromJson(json)).toList();
   }
 
-  Future<List<HardwareItem>> getItems(String tableName) async {
-    final db = await instance.database;
-    final result = await db.query(tableName, orderBy: 'name ASC');
-    return result.map((json) => HardwareItem(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      price: (json['price'] as num).toDouble(),
-      isDeleted: false
-    )).toList();
-  }
-  
   Future<void> saveUser(AuthUser user) async {
     final db = await instance.database;
     await db.delete('user');
