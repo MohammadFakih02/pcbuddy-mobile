@@ -15,11 +15,11 @@ class DatabaseHelper {
     return _database!;
   }
 
-  Future<Database> _initDB(String filePath) async {
+Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 4, onCreate: _createDB, onUpgrade: _onUpgrade);
+    return await openDatabase(path, version: 5, onCreate: _createDB, onUpgrade: _onUpgrade);
   }
 
   Future _createDB(Database db, int version) async {
@@ -30,24 +30,26 @@ class DatabaseHelper {
       email TEXT NOT NULL,
       token TEXT NOT NULL,
       role TEXT NOT NULL,
-      profilePicture TEXT
+      profilePicture TEXT,
+      bio TEXT 
     )
     ''');
     
     await _createHardwareTables(db);
-
     await _createPrebuiltTable(db);
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      await _createHardwareTables(db);
-    }
-    if (oldVersion < 3) {
-      await _createPrebuiltTable(db);
-    }
-    if (oldVersion < 4) {
-      await _addImagesToHardware(db);
+    if (oldVersion < 2) await _createHardwareTables(db);
+    if (oldVersion < 3) await _createPrebuiltTable(db);
+    if (oldVersion < 4) await _addImagesToHardware(db);
+    
+    if (oldVersion < 5) {
+      try {
+        await db.execute('ALTER TABLE user ADD COLUMN bio TEXT');
+      } catch (e) {
+        print("Column bio might already exist: $e");
+      }
     }
   }
 

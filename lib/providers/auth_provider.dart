@@ -10,14 +10,12 @@ class AuthProvider with ChangeNotifier {
   final SyncService _syncService = SyncService();
   
   bool _isLoading = false;
-  
   bool _isSyncing = false;
   double _syncProgress = 0.0;
 
   AuthUser? get user => _user;
   bool get isAuthenticated => _user != null;
   bool get isLoading => _isLoading;
-  
   bool get isSyncing => _isSyncing;
   double get syncProgress => _syncProgress;
 
@@ -91,6 +89,17 @@ class AuthProvider with ChangeNotifier {
   Future<void> logout() async {
     _user = null;
     await DatabaseHelper.instance.deleteUser();
+    notifyListeners();
+  }
+
+Future<void> updateLocalUser({String? name, String? profilePicture, String? bio}) async {
+    if (_user == null) return;
+    _user = _user!.copyWith(
+      username: name,
+      profilePicture: profilePicture,
+      bio: bio,
+    );
+    await DatabaseHelper.instance.saveUser(_user!);
     notifyListeners();
   }
 }

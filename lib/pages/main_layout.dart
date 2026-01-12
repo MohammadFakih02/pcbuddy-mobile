@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:pcbuddy/pages/build_page.dart';
 import 'package:pcbuddy/pages/home_page.dart';
 import 'package:pcbuddy/pages/laptop_input_page.dart';
+import 'package:pcbuddy/pages/profile_page.dart';
+import 'package:pcbuddy/providers/auth_provider.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -13,12 +16,11 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
 
-  // 1. Define the 4 pages
   final List<Widget> _pages = [
     const HomePage(),
     const PCBuilderPage(),
     const LaptopInputPage(),
-    const Center(child: Text("Profile Page")),
+    const ProfilePage(),
   ];
 
   final List<String> _titles = [
@@ -28,15 +30,17 @@ class _MainLayoutState extends State<MainLayout> {
     "My Profile",
   ];
 
+  void _logout() {
+    context.read<AuthProvider>().logout();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(_titles[_currentIndex]),
         centerTitle: true,
-        actions: _currentIndex == 1 
-          ? [IconButton(onPressed: () {}, icon: const Icon(Icons.add))] 
-          : null,
+        actions: _getAppBarActions(),
       ),
       body: IndexedStack(
         index: _currentIndex,
@@ -57,5 +61,20 @@ class _MainLayoutState extends State<MainLayout> {
         ],
       ),
     );
+  }
+
+  List<Widget>? _getAppBarActions() {
+    if (_currentIndex == 1) {
+      return [IconButton(onPressed: () {}, icon: const Icon(Icons.add))];
+    }
+    if (_currentIndex == 3) {
+      return [
+        IconButton(
+          onPressed: _logout,
+          icon: const Icon(Icons.logout, color: Colors.redAccent),
+        )
+      ];
+    }
+    return null;
   }
 }
