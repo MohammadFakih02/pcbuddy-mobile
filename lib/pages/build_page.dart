@@ -2,25 +2,34 @@ import 'package:flutter/material.dart';
 import '../models/sync_models.dart';
 import '../widgets/part_selection_tile.dart';
 import '../widgets/part_picker_sheet.dart';
-import '../pages/build_preview_page.dart'; // Import the preview page
+import '../pages/build_preview_page.dart';
 
 class PCBuilderPage extends StatefulWidget {
-  const PCBuilderPage({super.key});
+  // 1. Add optional parameter
+  final Map<String, HardwareItem?>? initialParts;
+
+  const PCBuilderPage({super.key, this.initialParts});
 
   @override
   State<PCBuilderPage> createState() => _PCBuilderPageState();
 }
 
 class _PCBuilderPageState extends State<PCBuilderPage> {
-  final Map<String, HardwareItem?> _selectedParts = {
-    "CPU": null,
-    "GPU": null,
-    "Motherboard": null,
-    "RAM": null,
-    "Storage": null,
-    "PSU": null,
-    "Case": null,
-  };
+  late Map<String, HardwareItem?> _selectedParts;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedParts = widget.initialParts ?? {
+      "CPU": null,
+      "GPU": null,
+      "Motherboard": null,
+      "RAM": null,
+      "Storage": null,
+      "PSU": null,
+      "Case": null,
+    };
+  }
 
   double _calculateTotal() {
     double total = 0;
@@ -67,12 +76,17 @@ class _PCBuilderPageState extends State<PCBuilderPage> {
     double totalPrice = _calculateTotal();
 
     return Scaffold(
+      appBar: widget.initialParts != null 
+        ? AppBar(title: const Text("Edit Build"), centerTitle: true)
+        : null, 
+        
       body: Column(
         children: [
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                // Total Price Display
                 Container(
                   padding: const EdgeInsets.all(24),
                   margin: const EdgeInsets.only(bottom: 24),
@@ -114,6 +128,7 @@ class _PCBuilderPageState extends State<PCBuilderPage> {
                   ),
                 ),
 
+                // Part List
                 ..._selectedParts.keys.map((category) {
                   return PartSelectionTile(
                     category: category,
@@ -126,6 +141,7 @@ class _PCBuilderPageState extends State<PCBuilderPage> {
             ),
           ),
 
+          // Action Button
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: ElevatedButton(

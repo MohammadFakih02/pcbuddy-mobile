@@ -5,6 +5,9 @@ import 'package:provider/provider.dart';
 import 'package:pcbuddy/config/api_constants.dart';
 import 'package:pcbuddy/providers/auth_provider.dart';
 import 'package:pcbuddy/services/user_service.dart';
+import 'package:pcbuddy/services/computer_service.dart';
+import 'package:pcbuddy/models/sync_models.dart';
+import 'package:pcbuddy/pages/build_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -16,13 +19,18 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final _nameController = TextEditingController();
   final _bioController = TextEditingController();
+  
   bool _isLoading = false;
   String? _profilePicUrl;
+  
+  Map<String, HardwareItem?>? _userPC;
+  bool _isLoadingPC = false;
 
   @override
   void initState() {
     super.initState();
     _loadProfile();
+    _loadUserPC();
   }
 
   Future<void> _loadProfile() async {
@@ -30,34 +38,67 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final token = context.read<AuthProvider>().user?.token ?? '';
       
-      final remoteUser = await UserService(token).getProfile();
-      
-      _nameController.text = remoteUser.username; 
-      _bioController.text = remoteUser.bio ?? ''; 
-      
-      setState(() {
-        _profilePicUrl = remoteUser.profilePicture;
-      });
-
-      if (mounted) {
-        await context.read<AuthProvider>().updateLocalUser(
-          name: remoteUser.username,
-          profilePicture: remoteUser.profilePicture,
-          bio: remoteUser.bio
-        );
-      }
-    } catch (e) {
-      final localUser = context.read<AuthProvider>().user;
-      if (localUser != null) {
-        _nameController.text = localUser.username;
-        _bioController.text = localUser.bio ?? '';
+      try {
+        final remoteUser = await UserService(token).getProfile();
+        _nameController.text = remoteUser.username;
+        _bioController.text = remoteUser.bio ?? '';
         setState(() {
-          _profilePicUrl = localUser.profilePicture;
+          _profilePicUrl = remoteUser.profilePicture;
         });
+        
+        if (mounted) {
+          await context.read<AuthProvider>().updateLocalUser(
+            name: remoteUser.username,
+            profilePicture: remoteUser.profilePicture,
+            bio: remoteUser.bio
+          );
+        }
+      } catch (e) {
+        final localUser = context.read<AuthProvider>().user;
+        if (localUser != null) {
+          _nameController.text = localUser.username;
+          _bioController.text = localUser.bio ?? '';
+          setState(() {
+            _profilePicUrl = localUser.profilePicture;
+          });
+        }
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _loadUserPC() async {
+    setState(() => _isLoadingPC = true);
+    try {
+      final user = context.read<AuthProvider>().user;
+      if (user == null) return;
+
+      final service = ComputerService(user.token);
+      final pc = await service.getUserPC(user.id);
+
+      if (mounted) {
+        setState(() {
+          _userPC = pc;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading PC: $e");
+    } finally {
+      if (mounted) setState(() => _isLoadingPC = false);
+    }
+  }
+
+  void _editBuild() async {
+    if (_userPC == null) return;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PCBuilderPage(initialParts: _userPC),
+      ),
+    );
+    _loadUserPC();
   }
 
   Future<void> _updateProfile() async {
@@ -65,6 +106,7 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() => _isLoading = true);
     try {
       final token = context.read<AuthProvider>().user?.token ?? '';
+      
       await UserService(token).updateProfile(
         _nameController.text.trim(),
         _bioController.text.trim(),
@@ -109,12 +151,10 @@ class _ProfilePageState extends State<ProfilePage> {
         });
         
         if (mounted) {
-          // Update Global Provider
           await context.read<AuthProvider>().updateLocalUser(
             profilePicture: newUrl,
           );
         }
-
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -141,7 +181,6 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
 
-    // REMOVED SCAFFOLD AND APPBAR
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -178,6 +217,38 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(height: 16),
           Text(user?.email ?? "", style: const TextStyle(color: Colors.grey)),
           
+          const SizedBox(height: 32),
+
+          Align(
+            alignment: Alignment.centerLeft, 
+            child: Text("My Saved Build", 
+              style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.bold)
+            )
+          ),
+          const SizedBox(height: 10),
+          
+          if (_isLoadingPC)
+            const Center(child: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(),
+            ))
+          else if (_userPC != null)
+            _buildPcCard(context)
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.1), 
+                borderRadius: BorderRadius.circular(12)
+              ),
+              child: const Text(
+                "No build saved yet. Go create one!", 
+                textAlign: TextAlign.center, 
+                style: TextStyle(color: Colors.grey)
+              ),
+            ),
+
           const SizedBox(height: 32),
 
           TextField(
@@ -220,6 +291,60 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPcCard(BuildContext context) {
+    double total = _userPC!.values
+        .where((p) => p != null)
+        .fold(0, (sum, p) => sum + p!.price);
+        
+    String cpuName = _userPC!['CPU']?.name ?? "No CPU";
+    String gpuName = _userPC!['GPU']?.name ?? "No GPU";
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white10),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0,4))],
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: Container(
+          width: 50, height: 50,
+          decoration: BoxDecoration(
+            color: Colors.blueAccent.withOpacity(0.1), 
+            borderRadius: BorderRadius.circular(10)
+          ),
+          child: const Icon(Icons.computer, color: Colors.blueAccent),
+        ),
+        title: const Text("Custom PC", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text("$cpuName\n$gpuName", 
+              maxLines: 2, 
+              overflow: TextOverflow.ellipsis, 
+              style: const TextStyle(fontSize: 12)
+            ),
+            const SizedBox(height: 4),
+            Text("\$${total.toStringAsFixed(2)}", 
+              style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold)
+            ),
+          ],
+        ),
+        trailing: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.white10,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)
+          ),
+          onPressed: _editBuild, 
+          child: const Text("Edit", style: TextStyle(color: Colors.white)),
+        ),
       ),
     );
   }
