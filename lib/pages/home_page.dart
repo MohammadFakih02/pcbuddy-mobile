@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pcbuddy/pages/laptop_input_page.dart';
 import 'package:provider/provider.dart';
 import 'package:pcbuddy/config/api_constants.dart';
 import 'package:pcbuddy/providers/auth_provider.dart';
@@ -150,10 +151,21 @@ class _HomePageState extends State<HomePage> {
               crossAxisSpacing: 16,
               childAspectRatio: 1.1,
               children: [
-                _buildToolCard(context, Icons.speed, Colors.purpleAccent, "FPS Estimator"),
-                _buildToolCard(context, Icons.laptop_mac, Colors.orangeAccent, "Laptop Rater"),
-                _buildToolCard(context, Icons.verified_user_outlined, Colors.greenAccent, "Compatibility"),
-                _buildToolCard(context, Icons.star_half, Colors.redAccent, "Rate My Build"),
+                _buildToolCard(context, Icons.speed, Colors.purpleAccent, "FPS Estimator", () {
+                   // TODO: Link to FPS Page
+                }),
+                
+                // LINKED HERE:
+                _buildToolCard(context, Icons.laptop_mac, Colors.orangeAccent, "Laptop Rater", () {
+                   Navigator.push(context, MaterialPageRoute(builder: (_) => const LaptopInputPage()));
+                }),
+                
+                _buildToolCard(context, Icons.verified_user_outlined, Colors.greenAccent, "Compatibility", () {
+                   // TODO: Link to Compat Page
+                }),
+                _buildToolCard(context, Icons.star_half, Colors.redAccent, "Rate My Build", () {
+                   // TODO: Link to Rate Page
+                }),
               ],
             ),
 
@@ -271,7 +283,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildToolCard(BuildContext context, IconData icon, Color color, String label) {
+Widget _buildToolCard(BuildContext context, IconData icon, Color color, String label, VoidCallback onTap) {
     return Material(
       color: Theme.of(context).cardColor,
       shape: RoundedRectangleBorder(
@@ -280,26 +292,17 @@ class _HomePageState extends State<HomePage> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          print("Clicked $label");
-        },
+        onTap: onTap, // Use the callback
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
               child: Icon(icon, color: color, size: 32),
             ),
             const SizedBox(height: 12),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-            ),
+            Text(label, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
           ],
         ),
       ),

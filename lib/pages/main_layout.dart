@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pcbuddy/pages/build_page.dart';
 import 'package:pcbuddy/pages/home_page.dart';
+import 'package:pcbuddy/pages/laptop_input_page.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -12,17 +13,18 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
 
-  // Updated List: Removed Chat
+  // 1. Define the 4 pages
   final List<Widget> _pages = [
     const HomePage(),
     const PCBuilderPage(),
-    const Center(child: Text("Profile Page")), // Placeholder for Profile
+    const LaptopInputPage(),
+    const Center(child: Text("Profile Page")),
   ];
 
-  // Updated Titles
   final List<String> _titles = [
     "PCBuddy",
-    "My Builds",
+    "Custom Build",
+    "Laptop Analyzer",
     "My Profile",
   ];
 
@@ -32,7 +34,6 @@ class _MainLayoutState extends State<MainLayout> {
       appBar: AppBar(
         title: Text(_titles[_currentIndex]),
         centerTitle: true,
-        // Show "Add" button only on Builds page
         actions: _currentIndex == 1 
           ? [IconButton(onPressed: () {}, icon: const Icon(Icons.add))] 
           : null,
@@ -47,10 +48,11 @@ class _MainLayoutState extends State<MainLayout> {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Theme.of(context).colorScheme.primary,
         unselectedItemColor: Colors.grey,
-        showUnselectedLabels: false, // Cleaner look
+        showUnselectedLabels: true,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.computer), label: "Builds"),
+          BottomNavigationBarItem(icon: Icon(Icons.laptop_mac), label: "Laptops"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
       ),

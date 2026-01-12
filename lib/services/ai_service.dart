@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:pcbuddy/config/api_constants.dart';
 import 'package:pcbuddy/models/sync_models.dart';
+import 'package:pcbuddy/models/ai_models.dart';
 
 class AiService {
   final String token;
@@ -113,6 +114,28 @@ class AiService {
       }
     }
     return [];
+  }
+
+   Future<LaptopAssessment> assessLaptop(String name, String details) async {
+    final response = await http.post(
+      Uri.parse('${ApiConstants.baseUrl}/api/ai/assess-laptop'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'laptopName': name,
+        'details': details,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      if (json['success'] == true) {
+        return LaptopAssessment.fromJson(json['response']);
+      }
+    }
+    throw Exception('Failed to assess laptop: ${response.body}');
   }
 
   Map<String, String> _createFullSystemRequest(Map<String, HardwareItem?> parts) {
