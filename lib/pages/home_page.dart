@@ -4,6 +4,7 @@ import 'package:pcbuddy/config/api_constants.dart';
 import 'package:pcbuddy/providers/auth_provider.dart';
 import 'package:pcbuddy/services/database_helper.dart';
 import 'package:pcbuddy/models/sync_models.dart';
+import 'package:pcbuddy/pages/ai_build_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,7 +14,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Changed from HardwareItem to PrebuiltItem
   late Future<List<PrebuiltItem>> _prebuiltsFuture;
 
   @override
@@ -23,7 +23,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<List<PrebuiltItem>> _fetchPrebuilts() async {
-    // Fetch from the new helper method
     return await DatabaseHelper.instance.getTopRatedPrebuilts();
   }
 
@@ -37,12 +36,11 @@ class _HomePageState extends State<HomePage> {
     return NetworkImage('${ApiConstants.baseUrl}$relativePath');
   }
 
-  // Helper for Product Images (handles parts from PCPartPicker vs relative URLs)
   String _formatProductImage(String? url) {
     if (url == null || url.isEmpty) return 'https://placehold.co/200x200/png?text=PC';
-    if (url.startsWith('//')) return 'https:$url'; // PCPartPicker format
+    if (url.startsWith('//')) return 'https:$url';
     if (url.startsWith('http')) return url;
-    return '${ApiConstants.baseUrl}$url'; // Local upload format
+    return '${ApiConstants.baseUrl}$url';
   }
 
   @override
@@ -54,7 +52,7 @@ class _HomePageState extends State<HomePage> {
         child: ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
-            // --- 1. Header (Unchanged) ---
+            // --- 1. Header ---
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -81,9 +79,13 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 24),
 
-            // --- 2. AI Builder Card (Unchanged) ---
             GestureDetector(
-              onTap: () { print("Navigate to AI Builder"); },
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AIBuildPage()),
+                );
+              },
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -97,7 +99,10 @@ class _HomePageState extends State<HomePage> {
                     )
                   ],
                   gradient: LinearGradient(
-                    colors: [Colors.blueAccent.shade400, Colors.blueAccent.shade700],
+                    colors: [
+                      Colors.blueAccent.shade400,
+                      Colors.blueAccent.shade700,
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -108,9 +113,19 @@ class _HomePageState extends State<HomePage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("AI Build Assistant", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                          Text(
+                            "AI Build Assistant",
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                           SizedBox(height: 8),
-                          Text("Generate a complete PC part list instantly based on your budget and needs.", style: TextStyle(color: Colors.white70)),
+                          Text(
+                            "Describe your dream PC and let AI generate the parts for you.",
+                            style: TextStyle(color: Colors.white70),
+                          ),
                         ],
                       ),
                     ),
@@ -122,8 +137,10 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 24),
 
-            // --- 3. AI Tools Grid (Unchanged) ---
-            const Text("AI Tools", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              "AI Tools",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
             GridView.count(
               crossAxisCount: 2,
@@ -135,14 +152,13 @@ class _HomePageState extends State<HomePage> {
               children: [
                 _buildToolCard(context, Icons.speed, Colors.purpleAccent, "FPS Estimator"),
                 _buildToolCard(context, Icons.laptop_mac, Colors.orangeAccent, "Laptop Rater"),
-                _buildToolCard(context, Icons.verified_user_outlined, Colors.greenAccent, "Compatibility Check"),
+                _buildToolCard(context, Icons.verified_user_outlined, Colors.greenAccent, "Compatibility"),
                 _buildToolCard(context, Icons.star_half, Colors.redAccent, "Rate My Build"),
               ],
             ),
 
             const SizedBox(height: 24),
 
-            // --- 4. TOP RATED BUILDS (New Section) ---
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -156,7 +172,7 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 16),
             
             SizedBox(
-              height: 140, // Increased height for better card layout
+              height: 160, 
               child: FutureBuilder<List<PrebuiltItem>>(
                 future: _prebuiltsFuture,
                 builder: (context, snapshot) {
@@ -167,8 +183,17 @@ class _HomePageState extends State<HomePage> {
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Container(
                       width: double.infinity,
-                      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(12)),
-                      child: const Center(child: Text("Sync data to see builds", style: TextStyle(color: Colors.grey))),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          "Sync data to see featured builds", 
+                          style: TextStyle(color: Colors.grey)
+                        )
+                      ),
                     );
                   }
 
@@ -190,7 +215,6 @@ class _HomePageState extends State<HomePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Image Section
                             Expanded(
                               flex: 3,
                               child: Container(
@@ -203,7 +227,6 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                             ),
-                            // Info Section
                             Expanded(
                               flex: 2,
                               child: Padding(
@@ -257,17 +280,26 @@ class _HomePageState extends State<HomePage> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () { print("Clicked $label"); },
+        onTap: () {
+          print("Clicked $label");
+        },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
               child: Icon(icon, color: color, size: 32),
             ),
             const SizedBox(height: 12),
-            Text(label, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
           ],
         ),
       ),

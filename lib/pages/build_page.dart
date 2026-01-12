@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/sync_models.dart';
 import '../widgets/part_selection_tile.dart';
 import '../widgets/part_picker_sheet.dart';
+import '../pages/build_preview_page.dart'; // Import the preview page
 
 class PCBuilderPage extends StatefulWidget {
   const PCBuilderPage({super.key});
@@ -11,7 +12,6 @@ class PCBuilderPage extends StatefulWidget {
 }
 
 class _PCBuilderPageState extends State<PCBuilderPage> {
-  // Using the HardwareItem model from sync_models.dart
   final Map<String, HardwareItem?> _selectedParts = {
     "CPU": null,
     "GPU": null,
@@ -22,7 +22,6 @@ class _PCBuilderPageState extends State<PCBuilderPage> {
     "Case": null,
   };
 
-  // Helper: Sum up prices
   double _calculateTotal() {
     double total = 0;
     _selectedParts.forEach((key, part) {
@@ -33,11 +32,10 @@ class _PCBuilderPageState extends State<PCBuilderPage> {
     return total;
   }
 
-  // Open the Sheet
   void _openPartPicker(String category) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Needed for taller sheets
+      isScrollControlled: true, 
       backgroundColor: Colors.transparent,
       builder: (context) => PartPickerSheet(
         category: category,
@@ -49,17 +47,18 @@ class _PCBuilderPageState extends State<PCBuilderPage> {
     );
   }
 
-  // Clear specific slot
   void _clearPart(String category) {
     setState(() {
       _selectedParts[category] = null;
     });
   }
 
-  void _saveBuild() {
-    // TODO: Implement API call to save build
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Build Saving not implemented yet"))
+  void _analyzeBuild() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BuildPreviewPage(selectedParts: _selectedParts),
+      ),
     );
   }
 
@@ -68,14 +67,12 @@ class _PCBuilderPageState extends State<PCBuilderPage> {
     double totalPrice = _calculateTotal();
 
     return Scaffold(
-      // Ensure body is behind navbar if transparent, but here standard
       body: Column(
         children: [
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // 1. Total Price Card
                 Container(
                   padding: const EdgeInsets.all(24),
                   margin: const EdgeInsets.only(bottom: 24),
@@ -117,8 +114,6 @@ class _PCBuilderPageState extends State<PCBuilderPage> {
                   ),
                 ),
 
-                // 2. Part List
-                // We use .keys.map to iterate through categories
                 ..._selectedParts.keys.map((category) {
                   return PartSelectionTile(
                     category: category,
@@ -131,21 +126,27 @@ class _PCBuilderPageState extends State<PCBuilderPage> {
             ),
           ),
 
-          // 3. Save Button (Pinned to bottom)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 56),
-                backgroundColor: totalPrice > 0 ? Colors.green : Colors.grey[800],
+                backgroundColor: totalPrice > 0 ? Colors.greenAccent.shade700 : Colors.grey[800],
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 0,
+                elevation: 5,
               ),
-              onPressed: totalPrice > 0 ? _saveBuild : null,
-              child: const Text(
-                "Save Configuration",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              onPressed: totalPrice > 0 ? _analyzeBuild : null,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.analytics_outlined),
+                  SizedBox(width: 8),
+                  Text(
+                    "Analyze & Preview",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
             ),
           )
