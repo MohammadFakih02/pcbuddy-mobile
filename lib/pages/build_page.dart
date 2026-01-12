@@ -5,7 +5,6 @@ import '../widgets/part_picker_sheet.dart';
 import '../pages/build_preview_page.dart';
 
 class PCBuilderPage extends StatefulWidget {
-  // 1. Add optional parameter
   final Map<String, HardwareItem?>? initialParts;
 
   const PCBuilderPage({super.key, this.initialParts});
@@ -99,7 +98,7 @@ class _PCBuilderPageState extends State<PCBuilderPage> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.blueAccent.withOpacity(0.25),
+                        color: Colors.blueAccent.withValues(alpha: 0.25),
                         blurRadius: 15,
                         offset: const Offset(0, 8),
                       )
@@ -110,7 +109,7 @@ class _PCBuilderPageState extends State<PCBuilderPage> {
                       Text(
                         "Estimated Total",
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9), 
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 14, 
                           letterSpacing: 1
                         ),
@@ -128,7 +127,6 @@ class _PCBuilderPageState extends State<PCBuilderPage> {
                   ),
                 ),
 
-                // Part List
                 ..._selectedParts.keys.map((category) {
                   return PartSelectionTile(
                     category: category,

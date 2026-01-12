@@ -15,10 +15,11 @@ class DatabaseHelper {
     return _database!;
   }
 
-Future<Database> _initDB(String filePath) async {
+  Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
+    // CHANGED: Version 5 for bio
     return await openDatabase(path, version: 5, onCreate: _createDB, onUpgrade: _onUpgrade);
   }
 
@@ -31,7 +32,7 @@ Future<Database> _initDB(String filePath) async {
       token TEXT NOT NULL,
       role TEXT NOT NULL,
       profilePicture TEXT,
-      bio TEXT 
+      bio TEXT
     )
     ''');
     
@@ -43,19 +44,17 @@ Future<Database> _initDB(String filePath) async {
     if (oldVersion < 2) await _createHardwareTables(db);
     if (oldVersion < 3) await _createPrebuiltTable(db);
     if (oldVersion < 4) await _addImagesToHardware(db);
-    
     if (oldVersion < 5) {
       try {
         await db.execute('ALTER TABLE user ADD COLUMN bio TEXT');
       } catch (e) {
-        print("Column bio might already exist: $e");
+        // Ignored
       }
     }
   }
 
   Future<void> _createHardwareTables(Database db) async {
     const tableSchema = 'id INTEGER PRIMARY KEY, name TEXT, price REAL, imageUrl TEXT';
-    
     await db.execute('CREATE TABLE cpus ($tableSchema)');
     await db.execute('CREATE TABLE gpus ($tableSchema)');
     await db.execute('CREATE TABLE memory ($tableSchema)');
@@ -83,28 +82,21 @@ Future<Database> _initDB(String filePath) async {
       try {
         await db.execute('ALTER TABLE $table ADD COLUMN imageUrl TEXT');
       } catch (e) {
-        //lalala
+        // Ignored
       }
     }
   }
 
-
   Future<void> processSyncBatch(String tableName, List<HardwareItem> items) async {
     final db = await instance.database;
     final batch = db.batch();
-
     for (var item in items) {
       if (item.isDeleted) {
         batch.delete(tableName, where: 'id = ?', whereArgs: [item.id]);
       } else {
-        batch.insert(
-          tableName,
-          item.toMap(),
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        batch.insert(tableName, item.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
       }
     }
-
     await batch.commit(noResult: true);
   }
 
@@ -151,7 +143,11 @@ Future<Database> _initDB(String filePath) async {
 
   Future<List<PrebuiltItem>> getTopRatedPrebuilts() async {
     final db = await instance.database;
-    final result = await db.query('prebuilts', orderBy: 'rating DESC', limit: 5);
+    final result = await db.query(
+      'prebuilts', 
+      orderBy: 'rating DESC', 
+      limit: 5
+    );
     return result.map((json) => PrebuiltItem.fromJson(json)).toList();
   }
 

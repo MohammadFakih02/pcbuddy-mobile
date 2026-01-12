@@ -64,7 +64,7 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- 1. Header ---
+              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -85,7 +85,7 @@ class _HomePageState extends State<HomePage> {
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.blueAccent.withOpacity(0.5), width: 2),
+                      border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.5), width: 2), 
                     ),
                     child: CircleAvatar(
                       radius: 22,
@@ -99,7 +99,6 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(height: 30),
 
-              // --- 2. Hero AI Builder Card ---
               GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -114,13 +113,13 @@ class _HomePageState extends State<HomePage> {
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.blueAccent.withOpacity(0.3),
+                        color: Colors.blueAccent.withValues(alpha: 0.3), 
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       )
                     ],
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF2563EB), Color(0xFF1E40AF)], // Richer Blue
+                      colors: [Color(0xFF2563EB), Color(0xFF1E40AF)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -150,7 +149,7 @@ class _HomePageState extends State<HomePage> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: Colors.white.withValues(alpha: 0.15), 
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: const Icon(Icons.auto_awesome, size: 32, color: Colors.white),
@@ -162,7 +161,6 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(height: 32),
 
-              // --- 3. Tools Grid ---
               const Text(
                 "Power Tools",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -175,7 +173,7 @@ class _HomePageState extends State<HomePage> {
                 physics: const NeverScrollableScrollPhysics(),
                 mainAxisSpacing: 16,
                 crossAxisSpacing: 16,
-                childAspectRatio: 1.3, // Slightly wider cards
+                childAspectRatio: 1.3,
                 children: [
                   _buildToolCard(
                     context, 
@@ -210,7 +208,6 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(height: 32),
 
-              // --- 4. Top Rated Builds ---
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -227,7 +224,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 16),
               
               SizedBox(
-                height: 180, // Taller for better visual
+                height: 180,
                 child: FutureBuilder<List<PrebuiltItem>>(
                   future: _prebuiltsFuture,
                   builder: (context, snapshot) {
@@ -270,14 +267,13 @@ class _HomePageState extends State<HomePage> {
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: Colors.white10),
                             boxShadow: [
-                              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 4))
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 4)) 
                             ]
                           ),
                           clipBehavior: Clip.antiAlias,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Image
                               Expanded(
                                 flex: 3,
                                 child: Stack(
@@ -288,20 +284,18 @@ class _HomePageState extends State<HomePage> {
                                       fit: BoxFit.cover,
                                       errorBuilder: (_,__,___) => Container(color: Colors.grey[800], child: const Icon(Icons.broken_image)),
                                     ),
-                                    // Gradient Overlay for text readability
                                     Container(
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
                                           begin: Alignment.topCenter,
                                           end: Alignment.bottomCenter,
-                                          colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                                          colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)], 
                                         ),
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              // Details
                               Expanded(
                                 flex: 2,
                                 child: Padding(
@@ -358,14 +352,14 @@ class _HomePageState extends State<HomePage> {
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
-        splashColor: color.withOpacity(0.1),
+        splashColor: color.withValues(alpha: 0.1), 
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
+                color: color.withValues(alpha: 0.15), 
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 28),

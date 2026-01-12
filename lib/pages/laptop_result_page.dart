@@ -69,9 +69,9 @@ class LaptopResultPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.redAccent.withOpacity(0.1),
+              color: Colors.redAccent.withValues(alpha: 0.1), 
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+              border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)), 
             ),
             child: Row(
               children: [
@@ -123,7 +123,7 @@ class LaptopResultPage extends StatelessWidget {
 
           const SizedBox(height: 20),
           
-          // Summary (Fixed Padding)
+          // Summary
           const Text("AI Summary", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Container(
@@ -138,7 +138,7 @@ class LaptopResultPage extends StatelessWidget {
               style: const TextStyle(height: 1.5, color: Colors.grey, fontSize: 14),
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 30),
         ],
       ),
     );
@@ -168,7 +168,6 @@ class LaptopResultPage extends StatelessWidget {
 
   Widget _buildScoreCircle(String label, String score, {bool isMain = false}) {
     String cleanScore = score.split('/')[0]; 
-    
     final double value = double.tryParse(cleanScore.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
     
     final Color color = value > 7 ? Colors.green : (value > 4 ? Colors.amber : Colors.red);
@@ -183,13 +182,13 @@ class LaptopResultPage extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               CircularProgressIndicator(
-                value: value / 10,
+                value: value / 10, 
                 backgroundColor: Colors.grey[800],
                 color: color,
                 strokeWidth: isMain ? 6 : 4,
               ),
               Text(
-                "${value.toStringAsFixed(0)}/10",
+                "${value.toStringAsFixed(0)}/10", 
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: isMain ? 14 : 11)
               ),
             ],

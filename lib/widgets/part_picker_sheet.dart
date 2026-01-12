@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/sync_models.dart';
 import '../services/database_helper.dart';
-import '../config/api_constants.dart';
+import 'package:pcbuddy/config/api_constants.dart';
 
 class PartPickerSheet extends StatefulWidget {
   final String category;
@@ -22,7 +22,9 @@ class _PartPickerSheetState extends State<PartPickerSheet> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   
-  final List<HardwareItem> _parts = [];
+  // FIX: Made final (Linter Error 4)
+  final List<HardwareItem> _parts = []; 
+  
   bool _isLoading = false;
   bool _hasMore = true;
   int _currentPage = 0;
@@ -58,11 +60,17 @@ class _PartPickerSheetState extends State<PartPickerSheet> {
       case "Motherboard": return 'motherboards';
       case "RAM": return 'memory';
       case "Storage": return 'storage';
-      case "Storage 2": return 'storage';
       case "PSU": return 'power_supplies';
       case "Case": return 'cases';
       default: return 'cpus';
     }
+  }
+
+  String _formatImage(String? url) {
+    if (url == null || url.isEmpty) return '';
+    if (url.startsWith('//')) return 'https:$url';
+    if (url.startsWith('http')) return url;
+    return '${ApiConstants.baseUrl}$url';
   }
 
   Future<void> _fetchParts() async {
@@ -106,13 +114,6 @@ class _PartPickerSheetState extends State<PartPickerSheet> {
       });
       _fetchParts();
     });
-  }
-
-  String _formatImage(String? url) {
-    if (url == null || url.isEmpty) return '';
-    if (url.startsWith('//')) return 'https:$url';
-    if (url.startsWith('http')) return url;
-    return '${ApiConstants.baseUrl}$url';
   }
 
   @override
@@ -168,7 +169,6 @@ class _PartPickerSheetState extends State<PartPickerSheet> {
 
           const Divider(color: Colors.white10),
 
-          // List
           Expanded(
             child: _parts.isEmpty && !_isLoading
                 ? const Center(child: Text("No parts found", style: TextStyle(color: Colors.grey)))
@@ -194,7 +194,7 @@ class _PartPickerSheetState extends State<PartPickerSheet> {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: Colors.blueAccent.withOpacity(0.1),
+                            color: Colors.blueAccent.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.white10),
                           ),

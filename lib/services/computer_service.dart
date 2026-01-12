@@ -40,6 +40,7 @@ class ComputerService {
       throw Exception('Network error: $e');
     }
   }
+
   Future<Map<String, HardwareItem?>?> getUserPC(int userId) async {
     final url = Uri.parse('${ApiConstants.baseUrl}/api/computer/user-pc/$userId');
 
@@ -75,7 +76,6 @@ class ComputerService {
         throw Exception('Failed to load PC: ${response.statusCode}');
       }
     } catch (e) {
-      print("Error fetching user PC: $e");
       return null;
     }
   }

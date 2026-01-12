@@ -60,6 +60,7 @@ class _BuildPreviewPageState extends State<BuildPreviewPage> with SingleTickerPr
         const SnackBar(content: Text("Build saved successfully!"), backgroundColor: Colors.green),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
       );
@@ -126,6 +127,7 @@ class _BuildPreviewPageState extends State<BuildPreviewPage> with SingleTickerPr
                   ],
                 ),
               ),
+
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
@@ -199,12 +201,12 @@ class _BuildPreviewPageState extends State<BuildPreviewPage> with SingleTickerPr
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.purple.shade900.withOpacity(0.5), Theme.of(context).cardColor],
+              colors: [Colors.purple.shade900.withValues(alpha: 0.5), Theme.of(context).cardColor], 
               begin: Alignment.topLeft,
               end: Alignment.bottomRight
             ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.purple.withOpacity(0.3)),
+            border: Border.all(color: Colors.purple.withValues(alpha: 0.3)), 
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,7 +273,7 @@ class _BuildPreviewPageState extends State<BuildPreviewPage> with SingleTickerPr
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isCompatible ? Colors.green.withOpacity(0.15) : Colors.orange.withOpacity(0.15),
+        color: isCompatible ? Colors.green.withValues(alpha: 0.15) : Colors.orange.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isCompatible ? Colors.green : Colors.orange,

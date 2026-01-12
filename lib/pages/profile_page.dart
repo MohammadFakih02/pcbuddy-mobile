@@ -36,6 +36,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _loadProfile() async {
     setState(() => _isLoading = true);
     try {
+      // 1. Get token safely first (sync)
       final token = context.read<AuthProvider>().user?.token ?? '';
       
       try {
@@ -46,14 +47,17 @@ class _ProfilePageState extends State<ProfilePage> {
           _profilePicUrl = remoteUser.profilePicture;
         });
         
-        if (mounted) {
-          await context.read<AuthProvider>().updateLocalUser(
-            name: remoteUser.username,
-            profilePicture: remoteUser.profilePicture,
-            bio: remoteUser.bio
-          );
-        }
+        // FIX: Check mounted before using context after await
+        if (!mounted) return;
+
+        await context.read<AuthProvider>().updateLocalUser(
+          name: remoteUser.username,
+          profilePicture: remoteUser.profilePicture,
+          bio: remoteUser.bio
+        );
       } catch (e) {
+        // Local fallback (no await before context usage here, but safe to check mounted)
+        if (!mounted) return;
         final localUser = context.read<AuthProvider>().user;
         if (localUser != null) {
           _nameController.text = localUser.username;
@@ -98,6 +102,7 @@ class _ProfilePageState extends State<ProfilePage> {
         builder: (_) => PCBuilderPage(initialParts: _userPC),
       ),
     );
+
     _loadUserPC();
   }
 
@@ -112,12 +117,13 @@ class _ProfilePageState extends State<ProfilePage> {
         _bioController.text.trim(),
       );
       
-      if (mounted) {
-        await context.read<AuthProvider>().updateLocalUser(
-          name: _nameController.text.trim(),
-          bio: _bioController.text.trim(),
-        );
-      }
+      // FIX: Check mounted before using context
+      if (!mounted) return;
+
+      await context.read<AuthProvider>().updateLocalUser(
+        name: _nameController.text.trim(),
+        bio: _bioController.text.trim(),
+      );
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -138,6 +144,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _pickAndUploadImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+     if (!mounted) return;
 
     if (pickedFile != null) {
       setState(() => _isLoading = true);
@@ -150,11 +157,11 @@ class _ProfilePageState extends State<ProfilePage> {
           _profilePicUrl = newUrl;
         });
         
-        if (mounted) {
-          await context.read<AuthProvider>().updateLocalUser(
-            profilePicture: newUrl,
-          );
-        }
+        if (!mounted) return;
+
+        await context.read<AuthProvider>().updateLocalUser(
+          profilePicture: newUrl,
+        );
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -239,7 +246,7 @@ class _ProfilePageState extends State<ProfilePage> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.1), 
+                color: Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12)
               ),
               child: const Text(
@@ -315,7 +322,7 @@ class _ProfilePageState extends State<ProfilePage> {
         leading: Container(
           width: 50, height: 50,
           decoration: BoxDecoration(
-            color: Colors.blueAccent.withOpacity(0.1), 
+            color: Colors.blueAccent.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10)
           ),
           child: const Icon(Icons.computer, color: Colors.blueAccent),

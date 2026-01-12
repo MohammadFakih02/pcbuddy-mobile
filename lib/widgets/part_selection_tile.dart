@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/sync_models.dart';
-import '../config/api_constants.dart';
+import 'package:pcbuddy/config/api_constants.dart';
 
 class PartSelectionTile extends StatelessWidget {
   final String category;
@@ -45,13 +45,14 @@ class PartSelectionTile extends StatelessWidget {
           ),
           child: Row(
             children: [
+              // Icon Container
               Container(
                 width: 44, 
                 height: 44,
                 padding: isSelected && selectedPart?.imageUrl == null ? const EdgeInsets.all(10) : EdgeInsets.zero,
                 decoration: BoxDecoration(
                   color: isSelected 
-                      ? theme.colorScheme.primary.withOpacity(0.1) 
+                      ? theme.colorScheme.primary.withValues(alpha: 0.1) 
                       : Colors.white10,
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -123,7 +124,7 @@ class PartSelectionTile extends StatelessWidget {
     switch (category) {
       case "CPU": return Icons.memory;
       case "GPU": return Icons.developer_board;
-      case "Motherboard": return Icons.dns; 
+      case "Motherboard": return Icons.dns;
       case "RAM": return Icons.sd_storage;
       case "Storage": return Icons.storage;
       case "PSU": return Icons.power;

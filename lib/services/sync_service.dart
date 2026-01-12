@@ -20,8 +20,6 @@ class SyncService {
         url += '?lastSync=$lastSync';
       }
 
-      print('🔄 Syncing from: $url');
-
       final response = await http.get(Uri.parse(url));
       
       onProgress?.call(0.3);
@@ -33,14 +31,11 @@ class SyncService {
         await _processUpdates(syncResponse, onProgress);
 
         await prefs.setString(_lastSyncKey, syncResponse.version);
-        print('✅ Sync Complete.');
-      } else if (response.statusCode == 304) {
-        print('✅ Data already up to date.');
-      } else {
-        print('❌ Sync Failed: ${response.statusCode}');
+      } else if (response.statusCode != 304) {
+        // Handle error
       }
     } catch (e) {
-      print('❌ Sync Error: $e');
+      // Handle error
     } finally {
       onProgress?.call(1.0);
     }
@@ -48,6 +43,7 @@ class SyncService {
 
   Future<void> _processUpdates(SyncResponse data, Function(double)? onProgress) async {
     final db = DatabaseHelper.instance;
+    
     double currentProgress = 0.3;
     double step = 0.08;
 
