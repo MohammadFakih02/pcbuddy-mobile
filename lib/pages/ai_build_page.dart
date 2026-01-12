@@ -18,15 +18,15 @@ class _AIBuildPageState extends State<AIBuildPage> {
   void _generateBuild() async {
     final text = _promptController.text.trim();
     if (text.isEmpty) return;
-
+    FocusScope.of(context).unfocus();
     setState(() => _isLoading = true);
-
     try {
       final token = context.read<AuthProvider>().user?.token ?? '';
       final aiService = AiService(token);
       final generatedParts = await aiService.generateBuild(text);
 
       if (!mounted) return;
+
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -46,49 +46,63 @@ class _AIBuildPageState extends State<AIBuildPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("AI Build Assistant")),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.auto_awesome, size: 80, color: Colors.blueAccent),
-            const SizedBox(height: 20),
-            const Text(
-              "Describe your dream PC",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "e.g., 'Gaming PC for Cyberpunk under \$1500' or 'White workstation for video editing'",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[400]),
-            ),
-            const SizedBox(height: 40),
-            TextField(
-              controller: _promptController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: "Enter your prompt here...",
-                filled: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _generateBuild,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.auto_awesome, size: 80, color: Colors.blueAccent),
+                const SizedBox(height: 20),
+                const Text(
+                  "Describe your dream PC",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
                 ),
-                child: _isLoading 
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text("Generate Build", style: TextStyle(fontSize: 18)),
-              ),
+                const SizedBox(height: 10),
+                Text(
+                  "e.g., 'Gaming PC for Cyberpunk under \$1500' or 'White workstation for video editing'",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey[400]),
+                ),
+                const SizedBox(height: 40),
+                
+                TextField(
+                  controller: _promptController,
+                  maxLines: 3,
+                  // Improve keyboard UX
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _generateBuild(),
+                  decoration: InputDecoration(
+                    hintText: "Enter your prompt here...",
+                    filled: true,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _generateBuild,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: _isLoading 
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("Generate Build", style: TextStyle(fontSize: 18)),
+                  ),
+                ),
+                
+                const SizedBox(height: 20), 
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

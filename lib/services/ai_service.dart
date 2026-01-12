@@ -91,6 +91,30 @@ class AiService {
     };
   }
 
+  Future<List<String>> checkCompatibility(Map<String, HardwareItem?> parts) async {
+    final body = _createFullSystemRequest(parts);
+
+    final response = await http.post(
+      Uri.parse('${ApiConstants.baseUrl}/api/ai/check-compatibility'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      if (json['success'] == true && json['response'] != null) {
+        final issuesList = json['response']['compatibilityIssues'] as List?;
+        if (issuesList == null || issuesList.isEmpty) return [];
+
+        return issuesList.map<String>((issue) => issue['issue'].toString()).toList();
+      }
+    }
+    return [];
+  }
+
   Map<String, String> _createFullSystemRequest(Map<String, HardwareItem?> parts) {
     return {
       'cpu': parts['CPU']?.name ?? '',

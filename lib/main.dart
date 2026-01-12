@@ -59,17 +59,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
-        // 1. If Syncing, show the Loading/Animation Screen
         if (auth.isSyncing) {
           return SyncScreen(progress: auth.syncProgress);
         }
-
-        // 2. If Authenticated (and not syncing), show Home
         if (auth.isAuthenticated) {
           return const MainLayout();
         }
 
-        // 3. Otherwise, show Login
         return const LoginPage();
       },
     );

@@ -22,7 +22,7 @@ class _PartPickerSheetState extends State<PartPickerSheet> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   
-  List<HardwareItem> _parts = [];
+  final List<HardwareItem> _parts = [];
   bool _isLoading = false;
   bool _hasMore = true;
   int _currentPage = 0;
