@@ -18,9 +18,7 @@ class DatabaseHelper {
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
-
-    // CHANGED: Version 5 for bio
-    return await openDatabase(path, version: 5, onCreate: _createDB, onUpgrade: _onUpgrade);
+    return await openDatabase(path, version: 6, onCreate: _createDB, onUpgrade: _onUpgrade);
   }
 
   Future _createDB(Database db, int version) async {
@@ -37,18 +35,73 @@ class DatabaseHelper {
     ''');
     
     await _createHardwareTables(db);
-    await _createPrebuiltTable(db);
+    
+    await db.execute('''
+      CREATE TABLE prebuilts (
+        id INTEGER PRIMARY KEY, 
+        name TEXT, 
+        price REAL, 
+        rating REAL, 
+        imageUrl TEXT,
+        cpuId INTEGER,
+        gpuId INTEGER,
+        memoryId INTEGER,
+        storageId INTEGER,
+        motherboardId INTEGER,
+        psuId INTEGER,
+        caseId INTEGER
+      )
+    ''');
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) await _createHardwareTables(db);
-    if (oldVersion < 3) await _createPrebuiltTable(db);
-    if (oldVersion < 4) await _addImagesToHardware(db);
+    if (oldVersion < 2) {
+      await _createHardwareTables(db);
+    }
+    
+    if (oldVersion < 3) {
+      await db.execute('''
+        CREATE TABLE prebuilts (
+          id INTEGER PRIMARY KEY, 
+          name TEXT, 
+          price REAL, 
+          rating REAL, 
+          imageUrl TEXT
+        )
+      ''');
+    }
+    if (oldVersion < 4) {
+      await _addImagesToHardware(db);
+    }
+
     if (oldVersion < 5) {
       try {
         await db.execute('ALTER TABLE user ADD COLUMN bio TEXT');
       } catch (e) {
-        // Ignored
+        // Ignore if exists
+      }
+    }
+    if (oldVersion < 6) {
+      try {
+        await db.execute('DROP TABLE IF EXISTS prebuilts');
+        await db.execute('''
+          CREATE TABLE prebuilts (
+            id INTEGER PRIMARY KEY, 
+            name TEXT, 
+            price REAL, 
+            rating REAL, 
+            imageUrl TEXT,
+            cpuId INTEGER,
+            gpuId INTEGER,
+            memoryId INTEGER,
+            storageId INTEGER,
+            motherboardId INTEGER,
+            psuId INTEGER,
+            caseId INTEGER
+          )
+        ''');
+      } catch (e) {
+        print("Error upgrading prebuilts: $e");
       }
     }
   }
@@ -64,25 +117,13 @@ class DatabaseHelper {
     await db.execute('CREATE TABLE cases ($tableSchema)');
   }
 
-  Future<void> _createPrebuiltTable(Database db) async {
-    await db.execute('''
-      CREATE TABLE prebuilts (
-        id INTEGER PRIMARY KEY, 
-        name TEXT, 
-        price REAL, 
-        rating REAL, 
-        imageUrl TEXT
-      )
-    ''');
-  }
-
   Future<void> _addImagesToHardware(Database db) async {
     final tables = ['cpus', 'gpus', 'memory', 'storage', 'motherboards', 'power_supplies', 'cases'];
     for (var table in tables) {
       try {
         await db.execute('ALTER TABLE $table ADD COLUMN imageUrl TEXT');
       } catch (e) {
-        // Ignored
+        // Ignore if exists
       }
     }
   }
@@ -150,6 +191,28 @@ class DatabaseHelper {
     );
     return result.map((json) => PrebuiltItem.fromJson(json)).toList();
   }
+
+  Future<Map<String, HardwareItem?>> getPrebuiltParts(PrebuiltItem pc) async {
+    final db = await instance.database;
+    
+    Future<HardwareItem?> fetch(String table, int? id) async {
+      if (id == null) return null;
+      final maps = await db.query(table, where: 'id = ?', whereArgs: [id]);
+      if (maps.isNotEmpty) return HardwareItem.fromJson(maps.first);
+      return null;
+    }
+
+    return {
+      "CPU": await fetch('cpus', pc.cpuId),
+      "GPU": await fetch('gpus', pc.gpuId),
+      "Motherboard": await fetch('motherboards', pc.motherboardId),
+      "RAM": await fetch('memory', pc.memoryId),
+      "Storage": await fetch('storage', pc.storageId),
+      "PSU": await fetch('power_supplies', pc.psuId),
+      "Case": await fetch('cases', pc.caseId),
+    };
+  }
+
 
   Future<void> saveUser(AuthUser user) async {
     final db = await instance.database;

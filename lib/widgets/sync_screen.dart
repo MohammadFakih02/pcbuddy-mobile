@@ -10,7 +10,6 @@ class SyncScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Percentage string (e.g. "45%")
     final percentage = (progress * 100).toInt();
 
     return Scaffold(
@@ -21,7 +20,6 @@ class SyncScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Cute Robot Animation
               SizedBox(
                 height: 250,
                 child: Lottie.asset(

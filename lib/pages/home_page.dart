@@ -7,6 +7,7 @@ import 'package:pcbuddy/models/sync_models.dart';
 import 'package:pcbuddy/pages/ai_build_page.dart';
 import 'package:pcbuddy/pages/laptop_input_page.dart';
 import 'package:pcbuddy/pages/build_page.dart';
+import 'package:pcbuddy/pages/prebuilt_details_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -64,7 +65,6 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -85,7 +85,7 @@ class _HomePageState extends State<HomePage> {
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.5), width: 2), 
+                      border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.5), width: 2),
                     ),
                     child: CircleAvatar(
                       radius: 22,
@@ -113,7 +113,7 @@ class _HomePageState extends State<HomePage> {
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.blueAccent.withValues(alpha: 0.3), 
+                        color: Colors.blueAccent.withValues(alpha: 0.3),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       )
@@ -149,7 +149,7 @@ class _HomePageState extends State<HomePage> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15), 
+                          color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: const Icon(Icons.auto_awesome, size: 32, color: Colors.white),
@@ -216,7 +216,7 @@ class _HomePageState extends State<HomePage> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   GestureDetector(
-                    onTap: () { /* TODO: See All */ },
+                    onTap: () { debugPrint("See All Tapped"); },
                     child: Text("See All", style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600)),
                   ),
                 ],
@@ -259,74 +259,89 @@ class _HomePageState extends State<HomePage> {
                       itemCount: builds.length,
                       itemBuilder: (context, index) {
                         final build = builds[index];
-                        return Container(
-                          width: 150,
-                          margin: const EdgeInsets.only(right: 16),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.white10),
-                            boxShadow: [
-                              BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 4)) 
-                            ]
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                flex: 3,
-                                child: Stack(
-                                  fit: StackFit.expand,
-                                  children: [
-                                    Image.network(
-                                      _formatProductImage(build.imageUrl),
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_,__,___) => Container(color: Colors.grey[800], child: const Icon(Icons.broken_image)),
-                                    ),
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                          colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)], 
+                        
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => PrebuiltDetailsPage(pcBuild: build),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: 150,
+                            margin: const EdgeInsets.only(right: 16),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).cardColor,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.white10),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 4))
+                              ]
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      Hero(
+                                        tag: 'prebuilt_${build.id}',
+                                        child: Image.network(
+                                          _formatProductImage(build.imageUrl),
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_,__,___) => Container(color: Colors.grey[800], child: const Icon(Icons.broken_image)),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(10.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        build.name, 
-                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.star, size: 12, color: Colors.amber),
-                                          const SizedBox(width: 4),
-                                          Text(build.rating.toString(), style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                                          const Spacer(),
-                                          Text(
-                                            "\$${build.price.toStringAsFixed(0)}",
-                                            style: const TextStyle(fontSize: 12, color: Colors.greenAccent, fontWeight: FontWeight.bold),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
                                           ),
-                                        ],
-                                      )
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                              ),
-                            ],
+                                // Details
+                                Expanded(
+                                  flex: 2,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(10.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          build.name, 
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.star, size: 12, color: Colors.amber),
+                                            const SizedBox(width: 4),
+                                            Text(build.rating.toString(), style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                                            const Spacer(),
+                                            Text(
+                                              "\$${build.price.toStringAsFixed(0)}",
+                                              style: const TextStyle(fontSize: 12, color: Colors.greenAccent, fontWeight: FontWeight.bold),
+                                            ),
+                                          ],
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
@@ -352,14 +367,14 @@ class _HomePageState extends State<HomePage> {
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
-        splashColor: color.withValues(alpha: 0.1), 
+        splashColor: color.withValues(alpha: 0.1),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15), 
+                color: color.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 28),

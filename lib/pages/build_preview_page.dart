@@ -5,6 +5,7 @@ import 'package:pcbuddy/models/sync_models.dart';
 import 'package:pcbuddy/providers/auth_provider.dart';
 import 'package:pcbuddy/services/ai_service.dart';
 import 'package:pcbuddy/services/computer_service.dart';
+import 'package:pcbuddy/pages/part_details_page.dart';
 
 class BuildPreviewPage extends StatefulWidget {
   final Map<String, HardwareItem?> selectedParts;
@@ -55,7 +56,11 @@ class _BuildPreviewPageState extends State<BuildPreviewPage> with SingleTickerPr
     try {
       final token = context.read<AuthProvider>().user?.token ?? '';
       await ComputerService(token).saveBuild(widget.selectedParts);
+      
       if (!mounted) return;
+
+      await context.read<AuthProvider>().refreshSavedPC();
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Build saved successfully!"), backgroundColor: Colors.green),
       );
@@ -201,12 +206,12 @@ class _BuildPreviewPageState extends State<BuildPreviewPage> with SingleTickerPr
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.purple.shade900.withValues(alpha: 0.5), Theme.of(context).cardColor], 
+              colors: [Colors.purple.shade900.withValues(alpha: 0.5), Theme.of(context).cardColor],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight
             ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.purple.withValues(alpha: 0.3)), 
+            border: Border.all(color: Colors.purple.withValues(alpha: 0.3)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,7 +246,7 @@ class _BuildPreviewPageState extends State<BuildPreviewPage> with SingleTickerPr
       children: widget.selectedParts.entries.map((entry) {
         final part = entry.value;
         if (part == null) return const SizedBox.shrink();
-
+        final heroTag = 'part_${entry.key}_${part.id}';
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
@@ -251,16 +256,37 @@ class _BuildPreviewPageState extends State<BuildPreviewPage> with SingleTickerPr
           ),
           child: ListTile(
             contentPadding: const EdgeInsets.all(12),
-            leading: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: _buildPartImage(part.imageUrl),
+            leading: Hero(
+              tag: heroTag,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: _buildPartImage(part.imageUrl),
+              ),
             ),
             title: Text(part.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
             subtitle: Text(entry.key, style: const TextStyle(color: Colors.grey)),
-            trailing: Text(
-              "\$${part.price.toStringAsFixed(2)}",
-              style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "\$${part.price.toStringAsFixed(2)}",
+                  style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right, color: Colors.white30, size: 20)
+              ],
             ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PartDetailsPage(
+                    category: entry.key,
+                    item: part,
+                  ),
+                ),
+              );
+            },
           ),
         );
       }).toList(),

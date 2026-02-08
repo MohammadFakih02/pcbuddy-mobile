@@ -25,7 +25,7 @@ class _LaptopInputPageState extends State<LaptopInputPage> {
     try {
       final token = context.read<AuthProvider>().user?.token ?? '';
       final aiService = AiService(token);
-      
+
       final result = await aiService.assessLaptop(
         _nameController.text.trim(),
         _detailsController.text.trim(),
@@ -35,9 +35,7 @@ class _LaptopInputPageState extends State<LaptopInputPage> {
 
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => LaptopResultPage(assessment: result),
-        ),
+        MaterialPageRoute(builder: (_) => LaptopResultPage(assessment: result)),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -57,7 +55,11 @@ class _LaptopInputPageState extends State<LaptopInputPage> {
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: [
-              const Icon(Icons.laptop_chromebook, size: 80, color: Colors.orangeAccent),
+              const Icon(
+                Icons.laptop_chromebook,
+                size: 80,
+                color: Colors.orangeAccent,
+              ),
               const SizedBox(height: 20),
               const Text(
                 "Check a Laptop's Performance",
@@ -71,7 +73,7 @@ class _LaptopInputPageState extends State<LaptopInputPage> {
                 style: TextStyle(color: Colors.grey[400]),
               ),
               const SizedBox(height: 40),
-              
+
               TextField(
                 controller: _nameController,
                 decoration: const InputDecoration(
@@ -99,11 +101,24 @@ class _LaptopInputPageState extends State<LaptopInputPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orangeAccent,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  child: _isLoading 
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("Analyze Laptop", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth:
+                                2.5,
+                          ),
+                        )
+                      : const Text(
+                          "Generate Build",
+                          style: TextStyle(fontSize: 18),
+                        ),
                 ),
               ),
             ],

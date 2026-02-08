@@ -5,7 +5,7 @@ class AuthUser {
   final String token;
   final String role;
   final String? profilePicture;
-  final String? bio; // <--- ADDED THIS
+  final String? bio;
 
   AuthUser({
     required this.id,

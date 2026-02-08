@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import '../models/auth_user.dart';
+import '../models/sync_models.dart';
 import '../services/auth_service.dart';
 import '../services/database_helper.dart';
 import '../services/sync_service.dart';
+import '../services/computer_service.dart';
 
 class AuthProvider with ChangeNotifier {
   AuthUser? _user;
+  Map<String, HardwareItem?>? _savedPC;
+
   final AuthService _authService = AuthService();
   final SyncService _syncService = SyncService();
   
@@ -14,10 +18,22 @@ class AuthProvider with ChangeNotifier {
   double _syncProgress = 0.0;
 
   AuthUser? get user => _user;
+  Map<String, HardwareItem?>? get savedPC => _savedPC;
   bool get isAuthenticated => _user != null;
   bool get isLoading => _isLoading;
   bool get isSyncing => _isSyncing;
   double get syncProgress => _syncProgress;
+
+  Future<void> refreshSavedPC() async {
+    if (_user == null) return;
+    try {
+      final computerService = ComputerService(_user!.token);
+      _savedPC = await computerService.getUserPC(_user!.id);
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error refreshing PC: $e");
+    }
+  }
 
   Future<void> _runSync() async {
     _isSyncing = true;
@@ -43,6 +59,7 @@ class AuthProvider with ChangeNotifier {
       _user = savedUser;
       notifyListeners();
       _runSync();
+      refreshSavedPC();
     }
   }
 
@@ -59,6 +76,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
 
       await _runSync(); 
+      refreshSavedPC();
 
     } catch (e) {
       _isLoading = false;
@@ -79,6 +97,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
 
       await _runSync();
+      refreshSavedPC();
     } catch (e) {
       _isLoading = false;
       notifyListeners();
@@ -88,17 +107,20 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> logout() async {
     _user = null;
+    _savedPC = null;
     await DatabaseHelper.instance.deleteUser();
     notifyListeners();
   }
 
-Future<void> updateLocalUser({String? name, String? profilePicture, String? bio}) async {
+  Future<void> updateLocalUser({String? name, String? profilePicture, String? bio}) async {
     if (_user == null) return;
+
     _user = _user!.copyWith(
       username: name,
       profilePicture: profilePicture,
       bio: bio,
     );
+
     await DatabaseHelper.instance.saveUser(_user!);
     notifyListeners();
   }

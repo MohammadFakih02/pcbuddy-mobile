@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pcbuddy/pages/main_layout.dart';
+import 'package:pcbuddy/widgets/main_layout.dart';
 import '../pages/login_page.dart';
 import '../pages/register_page.dart';
 

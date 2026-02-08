@@ -5,6 +5,13 @@ class PrebuiltItem {
   final double rating;
   final String? imageUrl;
   final bool isDeleted;
+  final int? cpuId;
+  final int? gpuId;
+  final int? memoryId;
+  final int? storageId;
+  final int? motherboardId;
+  final int? psuId;
+  final int? caseId;
 
   PrebuiltItem({
     required this.id, 
@@ -12,7 +19,14 @@ class PrebuiltItem {
     required this.price, 
     required this.rating,
     this.imageUrl,
-    required this.isDeleted
+    required this.isDeleted,
+    this.cpuId,
+    this.gpuId,
+    this.memoryId,
+    this.storageId,
+    this.motherboardId,
+    this.psuId,
+    this.caseId,
   });
 
   factory PrebuiltItem.fromJson(Map<String, dynamic> json) {
@@ -23,6 +37,13 @@ class PrebuiltItem {
       rating: (json['rating'] as num).toDouble(),
       imageUrl: json['imageUrl'],
       isDeleted: json['isDeleted'] ?? false,
+      cpuId: json['cpuId'],
+      gpuId: json['gpuId'],
+      memoryId: json['memoryId'],
+      storageId: json['storageId'],
+      motherboardId: json['motherboardId'],
+      psuId: json['powerSupplyId'],
+      caseId: json['caseId'],
     );
   }
 
@@ -33,6 +54,13 @@ class PrebuiltItem {
       'price': price,
       'rating': rating,
       'imageUrl': imageUrl,
+      'cpuId': cpuId,
+      'gpuId': gpuId,
+      'memoryId': memoryId,
+      'storageId': storageId,
+      'motherboardId': motherboardId,
+      'psuId': psuId,
+      'caseId': caseId,
     };
   }
 }

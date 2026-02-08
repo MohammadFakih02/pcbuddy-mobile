@@ -79,4 +79,38 @@ class ComputerService {
       return null;
     }
   }
+
+  Future<Map<String, dynamic>> fetchPartSpecs(String category, int id) async {
+    String endpointType;
+    switch (category) {
+      case "CPU": endpointType = "cpu"; break;
+      case "GPU": endpointType = "gpu"; break;
+      case "Motherboard": endpointType = "motherboard"; break;
+      case "RAM": endpointType = "memory"; break;
+      case "Storage": endpointType = "storage"; break;
+      case "PSU": endpointType = "powersupply"; break;
+      case "Case": endpointType = "case"; break;
+      default: throw Exception("Unknown category");
+    }
+
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/computer/$endpointType/$id');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to load details: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
 }

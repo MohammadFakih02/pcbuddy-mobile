@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:pcbuddy/providers/auth_provider.dart';
 import 'package:pcbuddy/routes/app_routes.dart';
 import 'package:pcbuddy/theme/app_theme.dart';
-import 'package:pcbuddy/pages/main_layout.dart';
+import 'package:pcbuddy/widgets/main_layout.dart';
 import 'package:pcbuddy/pages/login_page.dart';
 import 'package:pcbuddy/widgets/sync_screen.dart';
 

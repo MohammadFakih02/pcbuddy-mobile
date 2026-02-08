@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:pcbuddy/config/api_constants.dart';
 import 'package:pcbuddy/providers/auth_provider.dart';
 import 'package:pcbuddy/services/user_service.dart';
-import 'package:pcbuddy/services/computer_service.dart';
 import 'package:pcbuddy/models/sync_models.dart';
 import 'package:pcbuddy/pages/build_page.dart';
 
@@ -22,21 +21,19 @@ class _ProfilePageState extends State<ProfilePage> {
   
   bool _isLoading = false;
   String? _profilePicUrl;
-  
-  Map<String, HardwareItem?>? _userPC;
-  bool _isLoadingPC = false;
 
   @override
   void initState() {
     super.initState();
     _loadProfile();
-    _loadUserPC();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthProvider>().refreshSavedPC();
+    });
   }
 
   Future<void> _loadProfile() async {
     setState(() => _isLoading = true);
     try {
-      // 1. Get token safely first (sync)
       final token = context.read<AuthProvider>().user?.token ?? '';
       
       try {
@@ -47,17 +44,14 @@ class _ProfilePageState extends State<ProfilePage> {
           _profilePicUrl = remoteUser.profilePicture;
         });
         
-        // FIX: Check mounted before using context after await
-        if (!mounted) return;
-
-        await context.read<AuthProvider>().updateLocalUser(
-          name: remoteUser.username,
-          profilePicture: remoteUser.profilePicture,
-          bio: remoteUser.bio
-        );
+        if (mounted) {
+          await context.read<AuthProvider>().updateLocalUser(
+            name: remoteUser.username,
+            profilePicture: remoteUser.profilePicture,
+            bio: remoteUser.bio
+          );
+        }
       } catch (e) {
-        // Local fallback (no await before context usage here, but safe to check mounted)
-        if (!mounted) return;
         final localUser = context.read<AuthProvider>().user;
         if (localUser != null) {
           _nameController.text = localUser.username;
@@ -72,38 +66,13 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Future<void> _loadUserPC() async {
-    setState(() => _isLoadingPC = true);
-    try {
-      final user = context.read<AuthProvider>().user;
-      if (user == null) return;
-
-      final service = ComputerService(user.token);
-      final pc = await service.getUserPC(user.id);
-
-      if (mounted) {
-        setState(() {
-          _userPC = pc;
-        });
-      }
-    } catch (e) {
-      debugPrint("Error loading PC: $e");
-    } finally {
-      if (mounted) setState(() => _isLoadingPC = false);
-    }
-  }
-
-  void _editBuild() async {
-    if (_userPC == null) return;
-
+  void _editBuild(Map<String, HardwareItem?> currentPC) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PCBuilderPage(initialParts: _userPC),
+        builder: (_) => PCBuilderPage(initialParts: currentPC),
       ),
     );
-
-    _loadUserPC();
   }
 
   Future<void> _updateProfile() async {
@@ -117,13 +86,12 @@ class _ProfilePageState extends State<ProfilePage> {
         _bioController.text.trim(),
       );
       
-      // FIX: Check mounted before using context
-      if (!mounted) return;
-
-      await context.read<AuthProvider>().updateLocalUser(
-        name: _nameController.text.trim(),
-        bio: _bioController.text.trim(),
-      );
+      if (mounted) {
+        await context.read<AuthProvider>().updateLocalUser(
+          name: _nameController.text.trim(),
+          bio: _bioController.text.trim(),
+        );
+      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -144,7 +112,6 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _pickAndUploadImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-     if (!mounted) return;
 
     if (pickedFile != null) {
       setState(() => _isLoading = true);
@@ -157,11 +124,11 @@ class _ProfilePageState extends State<ProfilePage> {
           _profilePicUrl = newUrl;
         });
         
-        if (!mounted) return;
-
-        await context.read<AuthProvider>().updateLocalUser(
-          profilePicture: newUrl,
-        );
+        if (mounted) {
+          await context.read<AuthProvider>().updateLocalUser(
+            profilePicture: newUrl,
+          );
+        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -186,13 +153,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AuthProvider>().user;
+    final authProvider = context.watch<AuthProvider>();
+    final user = authProvider.user;
+    final savedPC = authProvider.savedPC;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          // Avatar
           Center(
             child: Stack(
               children: [
@@ -234,13 +202,8 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           const SizedBox(height: 10),
           
-          if (_isLoadingPC)
-            const Center(child: Padding(
-              padding: EdgeInsets.all(8.0),
-              child: CircularProgressIndicator(),
-            ))
-          else if (_userPC != null)
-            _buildPcCard(context)
+          if (savedPC != null)
+            _buildPcCard(context, savedPC)
           else
             Container(
               width: double.infinity,
@@ -302,13 +265,13 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildPcCard(BuildContext context) {
-    double total = _userPC!.values
+  Widget _buildPcCard(BuildContext context, Map<String, HardwareItem?> pcData) {
+    double total = pcData.values
         .where((p) => p != null)
         .fold(0, (sum, p) => sum + p!.price);
         
-    String cpuName = _userPC!['CPU']?.name ?? "No CPU";
-    String gpuName = _userPC!['GPU']?.name ?? "No GPU";
+    String cpuName = pcData['CPU']?.name ?? "No CPU";
+    String gpuName = pcData['GPU']?.name ?? "No GPU";
 
     return Container(
       decoration: BoxDecoration(
@@ -349,7 +312,7 @@ class _ProfilePageState extends State<ProfilePage> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)
           ),
-          onPressed: _editBuild, 
+          onPressed: () => _editBuild(pcData), 
           child: const Text("Edit", style: TextStyle(color: Colors.white)),
         ),
       ),

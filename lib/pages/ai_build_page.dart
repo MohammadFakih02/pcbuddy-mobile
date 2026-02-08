@@ -54,7 +54,11 @@ class _AIBuildPageState extends State<AIBuildPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.auto_awesome, size: 80, color: Colors.blueAccent),
+                const Icon(
+                  Icons.auto_awesome,
+                  size: 80,
+                  color: Colors.blueAccent,
+                ),
                 const SizedBox(height: 20),
                 const Text(
                   "Describe your dream PC",
@@ -68,7 +72,7 @@ class _AIBuildPageState extends State<AIBuildPage> {
                   style: TextStyle(color: Colors.grey[400]),
                 ),
                 const SizedBox(height: 40),
-                
+
                 TextField(
                   controller: _promptController,
                   maxLines: 3,
@@ -78,11 +82,13 @@ class _AIBuildPageState extends State<AIBuildPage> {
                   decoration: InputDecoration(
                     hintText: "Enter your prompt here...",
                     filled: true,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
-                
+
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -91,15 +97,30 @@ class _AIBuildPageState extends State<AIBuildPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueAccent,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: _isLoading 
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Generate Build", style: TextStyle(fontSize: 18)),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : const Text(
+                            "Analyze Laptop",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
-                
-                const SizedBox(height: 20), 
+
+                const SizedBox(height: 20),
               ],
             ),
           ),
